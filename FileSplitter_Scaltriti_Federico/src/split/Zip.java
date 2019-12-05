@@ -19,11 +19,11 @@ public class Zip extends Split{
 
 	
 	public static void compress(){
-	    String zipFile = "C:/Users/stefano.scaltriti/workspace/"
-    		+ "Programmazione ad Oggetti/FileSplitter_Scaltriti_Federico/broad.zip";
+	    String zipFile = "C:/Users/stefano.scaltriti/Git/FileSplitter"
+    		+ "/FileSplitter_Scaltriti_Federico/Muse.zip";
 	    
-	    String[] srcFiles = { "C:/Users/stefano.scaltriti/workspace/"
-    		+ "Programmazione ad Oggetti/FileSplitter_Scaltriti_Federico/broad.mp4"};
+	    String srcFiles = "C:/Users/stefano.scaltriti/Git/FileSplitter"
+	    		+ "/FileSplitter_Scaltriti_Federico/Muse.mp3";
 	     
 	    ZipOutputStream zos = null;
 	    try {
@@ -32,8 +32,9 @@ public class Zip extends Split{
 	        FileOutputStream fos = new FileOutputStream(zipFile);
 	        zos = new ZipOutputStream(fos);
 	         
-	        for (int i=0; i < srcFiles.length; i++) {
-	            File srcFile = new File(srcFiles[i]);
+	        //for (int i=0; i < srcFiles.length; i++) {
+	            File srcFile = new File(srcFiles);
+	            
 	            FileInputStream fis = new FileInputStream(srcFile);
 	
 	            // begin writing a new ZIP entry, positions the stream to the start of the entry data
@@ -46,7 +47,7 @@ public class Zip extends Split{
 	            zos.closeEntry();
 	            // close the InputStream
 	            fis.close();
-	        }
+	        //}
 	        // close the ZipOutputStream
 	        zos.close();
 	         
@@ -61,7 +62,7 @@ public class Zip extends Split{
 		for(int destIx=1; destIx <= numSplits; destIx++) {	
             BufferedOutputStream bw = null;
 			try {
-				bw = new BufferedOutputStream(new FileOutputStream(getFileName()+destIx+".zip"));
+				bw = new BufferedOutputStream(new FileOutputStream(getFileName()+destIx+"Z"+".zip"));
 			} catch (FileNotFoundException e) {
 				System.err.println(getFileName()+".zip"+" NOT FOUND !");
 			}
@@ -81,4 +82,12 @@ public class Zip extends Split{
             bw.close();
         }
 	}
+	
+	@Override
+    public void checkFileRemaining(long remainingBytes, long numSplits) throws IOException{
+
+    	BufferedOutputStream bw = new BufferedOutputStream(new FileOutputStream(getFileName()+(numSplits+1)+"Z"+getFileFormat()));
+    	readWrite(getRaf(), bw, remainingBytes);
+    	bw.close();
+    }
 }

@@ -19,7 +19,7 @@ public class SplitTimes extends Split{
 		for(int destIx=1; destIx <= numSplits; destIx++) {	
             BufferedOutputStream bw = null;
 			try {
-				bw = new BufferedOutputStream(new FileOutputStream(getFileName()+destIx+getFileFormat()));
+				bw = new BufferedOutputStream(new FileOutputStream(getFileName()+destIx+"T"+getFileFormat()));
 			} catch (FileNotFoundException e) {
 				System.err.println(getFileName()+getFileFormat()+" NOT FOUND !");
 			}

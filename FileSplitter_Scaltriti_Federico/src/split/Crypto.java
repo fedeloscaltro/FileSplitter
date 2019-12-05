@@ -108,11 +108,11 @@ public class Crypto extends Split{
 	
 	@Override
 	public void mainDivision(long numSplits, long bytesPerSplit, int maxReadBufferSize, long sourceSize) throws IOException{
-		System.out.println("3 - numSplits: "+numSplits);
+		
 		for(int destIx=1; destIx <= numSplits; destIx++) {	
             BufferedOutputStream bw = null;
 			try {
-				bw = new BufferedOutputStream(new FileOutputStream(getFileName()+destIx+getFileFormat()));
+				bw = new BufferedOutputStream(new FileOutputStream(getFileName()+destIx+"C"+getFileFormat()));
 			} catch (FileNotFoundException e) {
 				System.err.println(getFileName()+getFileFormat()+" NOT FOUND !");
 			}
@@ -131,5 +131,13 @@ public class Crypto extends Split{
             bw.close();
         }
 	}
+	
+	@Override
+    public void checkFileRemaining(long remainingBytes, long numSplits) throws IOException{
+
+    	BufferedOutputStream bw = new BufferedOutputStream(new FileOutputStream(getFileName()+(numSplits+1)+"C"+getFileFormat()));
+    	readWrite(getRaf(), bw, remainingBytes);
+    	bw.close();
+    }
 
 }

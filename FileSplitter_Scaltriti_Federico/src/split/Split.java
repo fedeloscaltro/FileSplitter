@@ -33,7 +33,7 @@ public class Split {
 		for(int destIx=1; destIx <= numSplits; destIx++) {	
             BufferedOutputStream bw = null;
 			try {
-				bw = new BufferedOutputStream(new FileOutputStream(getFileName()+destIx+getFileFormat()));
+				bw = new BufferedOutputStream(new FileOutputStream(getFileName()+destIx+"D"+getFileFormat()));
 			} catch (FileNotFoundException e) {
 				System.err.println(getFileName()+getFileFormat()+" NOT FOUND !");
 			}
@@ -55,7 +55,7 @@ public class Split {
 	
     public void checkFileRemaining(long remainingBytes, long numSplits) throws IOException{
 
-    	BufferedOutputStream bw = new BufferedOutputStream(new FileOutputStream(getFileName()+(numSplits+1)+getFileFormat()));
+    	BufferedOutputStream bw = new BufferedOutputStream(new FileOutputStream(getFileName()+(numSplits+1)+"D"+getFileFormat()));
     	readWrite(getRaf(), bw, remainingBytes);
     	bw.close();
     }
