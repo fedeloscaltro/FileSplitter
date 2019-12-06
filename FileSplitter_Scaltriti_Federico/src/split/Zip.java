@@ -22,8 +22,8 @@ public class Zip extends Split{
 	    String zipFile = "C:/Users/stefano.scaltriti/Git/FileSplitter"
     		+ "/FileSplitter_Scaltriti_Federico/Muse.zip";
 	    
-	    String srcFiles = "C:/Users/stefano.scaltriti/Git/FileSplitter"
-	    		+ "/FileSplitter_Scaltriti_Federico/Muse.mp3";
+	    String srcFiles[] = {"C:/Users/stefano.scaltriti/Git/FileSplitter"
+	    		+ "/FileSplitter_Scaltriti_Federico/Muse.mp3"};
 	     
 	    ZipOutputStream zos = null;
 	    try {
@@ -32,8 +32,8 @@ public class Zip extends Split{
 	        FileOutputStream fos = new FileOutputStream(zipFile);
 	        zos = new ZipOutputStream(fos);
 	         
-	        //for (int i=0; i < srcFiles.length; i++) {
-	            File srcFile = new File(srcFiles);
+	        for (int i=0; i < srcFiles.length; i++) {
+	            File srcFile = new File(srcFiles[i]);
 	            
 	            FileInputStream fis = new FileInputStream(srcFile);
 	
@@ -47,7 +47,7 @@ public class Zip extends Split{
 	            zos.closeEntry();
 	            // close the InputStream
 	            fis.close();
-	        //}
+	        }
 	        // close the ZipOutputStream
 	        zos.close();
 	         

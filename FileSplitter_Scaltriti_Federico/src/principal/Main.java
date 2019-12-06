@@ -45,7 +45,7 @@ public class Main {
 		RandomAccessFile raf = null;
         
         int decision, action = 2;
-        decision = 1;
+        decision = 4;
         char letter;
         long sourceSize = 0;
       
@@ -134,7 +134,17 @@ public class Main {
         		case 2:
         			break;
         		case 3:
-        			break;
+        			letter = 'Z';
+        			fullPath = "C:/Users/stefano.scaltriti/Git/FileSplitter"
+        		    		+ "/FileSplitter_Scaltriti_Federico/Muse1T.mp3";
+        			directory = fullPath.substring(0, fullPath.lastIndexOf("/")+1);
+                	fileFormat = fullPath.substring(fullPath.lastIndexOf("."), fullPath.length());
+                	fileName = fullPath.substring(fullPath.lastIndexOf("/")+1, fullPath.lastIndexOf("."));
+                	System.out.println("directory: "+directory+'\n'+"fileFormat: "+fileFormat+'\n'+"fileName: "+fileName);
+        			
+                	m = new Merger(fileName, fileFormat); //directory+fileName+1+letter+fileFormat
+        			m.merge(letter);
+                	break;
         		case 4:
         			letter = 'T';
         			fullPath = "C:/Users/stefano.scaltriti/Git/FileSplitter"
@@ -142,7 +152,6 @@ public class Main {
         			directory = fullPath.substring(0, fullPath.lastIndexOf("/")+1);
                 	fileFormat = fullPath.substring(fullPath.lastIndexOf("."), fullPath.length());
                 	fileName = fullPath.substring(fullPath.lastIndexOf("/")+1, fullPath.lastIndexOf("."));
-                	System.out.println("directory: "+directory+'\n'+"fileFormat: "+fileFormat+'\n'+"fileName: "+fileName);
         			
         			m = new Merger(fileName, fileFormat); //directory+fileName+1+letter+fileFormat
         			m.merge(letter);
