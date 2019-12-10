@@ -15,11 +15,13 @@ public class SplitTimes extends Split{
 	@Override
 	public void mainDivision(long numSplits, long bytesPerSplit, int maxReadBufferSize, long sourceSize) throws IOException{
 		long remainingBytes = sourceSize % bytesPerSplit;
+		String name = null;
 		
 		for(int destIx=1; destIx <= numSplits; destIx++) {	
             BufferedOutputStream bw = null;
 			try {
-				bw = new BufferedOutputStream(new FileOutputStream(getFileName()+destIx+"T"+getFileFormat()));
+				name = getFileName()+destIx+"T"+getFileFormat();
+				bw = new BufferedOutputStream(new FileOutputStream(name));
 			} catch (FileNotFoundException e) {
 				System.err.println(getFileName()+getFileFormat()+" NOT FOUND !");
 			}
@@ -27,17 +29,17 @@ public class SplitTimes extends Split{
                 long numReads = bytesPerSplit/maxReadBufferSize;
                 long numRemainingRead = bytesPerSplit % maxReadBufferSize;
                 for(int i=0; i<numReads; i++) {
-                	readWrite(getRaf(), bw, maxReadBufferSize);
+                	readWrite(name, bw, maxReadBufferSize);
                 }
                 if(numRemainingRead > 0)
-                	readWrite(getRaf(), bw, numRemainingRead);
+                	readWrite(name, bw, numRemainingRead);
                 
                 //TODO se nel merge non lo ricompone perfettamente, ins. questo controllo
                 if (destIx == numSplits && remainingBytes > 0)
-                	readWrite(getRaf(), bw, remainingBytes);
+                	readWrite(name, bw, remainingBytes);
                 
             }else {
-            	readWrite(getRaf(), bw, bytesPerSplit);	
+            	readWrite(name, bw, bytesPerSplit);	
             }
             bw.close();
         }
@@ -49,6 +51,4 @@ public class SplitTimes extends Split{
     	mainDivision(numSplits, bytesPerSplit, maxReadBufferSize, sourceSize);
         getRaf().close();
     }
-
-
 }

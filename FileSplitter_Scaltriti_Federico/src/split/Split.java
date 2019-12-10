@@ -21,19 +21,22 @@ public class Split {
 		this.raf = raf;
 	}
 
-	public void readWrite(RandomAccessFile raf, BufferedOutputStream bw, long numBytes) throws IOException {
+	public void readWrite(String name, BufferedOutputStream bw, long numBytes) throws IOException {
         byte[] buf = new byte[(int) numBytes];
-        int val = raf.read(buf);
+        int val = getRaf().read(buf);
         if(val != -1) {
             bw.write(buf);
         }
 	}
 	
 	public void mainDivision(long numSplits, long bytesPerSplit, int maxReadBufferSize, long sourceSize) throws IOException{
+		String name = null;
+		
 		for(int destIx=1; destIx <= numSplits; destIx++) {	
             BufferedOutputStream bw = null;
 			try {
-				bw = new BufferedOutputStream(new FileOutputStream(getFileName()+destIx+"D"+getFileFormat()));
+				name = getFileName()+destIx+"D"+getFileFormat();
+				bw = new BufferedOutputStream(new FileOutputStream(name));
 			} catch (FileNotFoundException e) {
 				System.err.println(getFileName()+getFileFormat()+" NOT FOUND !");
 			}
@@ -41,22 +44,22 @@ public class Split {
                 long numReads = bytesPerSplit/maxReadBufferSize;
                 long numRemainingRead = bytesPerSplit % maxReadBufferSize;
                 for(int i=0; i<numReads; i++) {
-                	readWrite(getRaf(), bw, maxReadBufferSize);
+                	readWrite(name, bw, maxReadBufferSize);
                 }
                 if(numRemainingRead > 0) {
-                	readWrite(getRaf(), bw, numRemainingRead);
+                	readWrite(name, bw, numRemainingRead);
                 }
             }else {
-            	readWrite(getRaf(), bw, bytesPerSplit);
+            	readWrite(name, bw, bytesPerSplit);
             }
             bw.close();
         }
 	}
 	
     public void checkFileRemaining(long remainingBytes, long numSplits) throws IOException{
-
-    	BufferedOutputStream bw = new BufferedOutputStream(new FileOutputStream(getFileName()+(numSplits+1)+"D"+getFileFormat()));
-    	readWrite(getRaf(), bw, remainingBytes);
+    	String name = getFileName()+(numSplits+1)+"D"+getFileFormat();
+    	BufferedOutputStream bw = new BufferedOutputStream(new FileOutputStream(name));
+    	readWrite(name, bw, remainingBytes);
     	bw.close();
     }
     

@@ -1,118 +1,94 @@
 package split;
 
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
+import java.io.UnsupportedEncodingException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.CipherOutputStream;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.SecretKeySpec;
 
 public class Crypto extends Split{
+	
+	// Create Cipher instance and initialize it to encryption mode
+    Cipher cipher = null;
+    SecretKeySpec secretKey = null;
 
 	public Crypto(String fileName, String fileFormat, RandomAccessFile raf) {
 		super(fileName, fileFormat, raf);
-		// TODO Auto-generated constructor stub
 	}
 	
-	public void crypt(){
-		try{
-            byte[] plainBytes = "HELLO JCE".getBytes();
-             
-            // Generate the key first
-            KeyGenerator keyGen = KeyGenerator.getInstance("AES");
-            keyGen.init(128);  // Key size
-            Key key = keyGen.generateKey();
-          
-            // Create Cipher instance and initialize it to encrytion mode
-            Cipher cipher = Cipher.getInstance("AES/OFB/PKCS5Padding");  // Transformation of the algorithm
-            cipher.init(Cipher.ENCRYPT_MODE, key);
-            byte[] cipherBytes = cipher.doFinal(plainBytes);
-             
-            // Reinitialize the Cipher to decryption mode
-            cipher.init(Cipher.DECRYPT_MODE, key, cipher.getParameters());
-            byte[] plainBytesDecrypted = cipher.doFinal(cipherBytes);
-             
-            System.out.println("DECRUPTED DATA : "+new String(plainBytesDecrypted));    
-        }catch(Exception ex){
-            ex.printStackTrace();
-        }
-	}
-	
-	private Key keyGeneration(){
-        KeyGenerator keyGen = null;
+	private void setKey(String passwd){
+		byte[] hash;
+        
+        //System.out.println(passwd.getBytes());
+        
+        MessageDigest sha = null;
+        
 		try {
-			keyGen = KeyGenerator.getInstance("AES");
-		} catch (NoSuchAlgorithmException e) {
+			sha = MessageDigest.getInstance("SHA-1");
+			hash = passwd.getBytes("UTF-8");
+			hash = sha.digest(hash);
+			hash = Arrays.copyOf(hash, 16);
+			secretKey = new SecretKeySpec(hash, "AES");
+		} catch (NoSuchAlgorithmException | UnsupportedEncodingException e1) {
+			e1.printStackTrace();
+		}
+	}
+	
+	public void encrypt(String name, FileOutputStream fos, CipherOutputStream cos) throws FileNotFoundException{
+		//ENCRYPTION
+        //byte[] iv = new byte[16];
+        
+        try {
+			cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+			// Transformation of the algorithm
+			cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException e) {
 			e.printStackTrace();
 		}
-        keyGen.init(128);  // Key size
-        Key key = keyGen.generateKey();
         
-        return key;
+        
+        
+        //fos = new FileOutputStream(name); 
+        //cos = new CipherOutputStream(fos, cipher); //<--PROBLEMA
 	}
 	
-	@Override
-	public void readWrite(RandomAccessFile raf, BufferedOutputStream bw, long numBytes) throws IOException {
+	public void readWrite(CipherOutputStream cos, long numBytes) throws IOException {
         byte[] buf = new byte[(int) numBytes];
-        byte[] cipherBytes = null;
         
-     // Generate the key first
-        Key key = keyGeneration();
-        
-     // Create Cipher instance and initialize it to encryption mode
-        Cipher cipher = null;
-		try {
-			cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-			
-			// Transformation of the algorithm
-			cipher.init(Cipher.ENCRYPT_MODE, key);
-			
-		} catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
-			e.printStackTrace();
-		}  catch (InvalidKeyException e) {
-			e.printStackTrace();
-		}    
-        
-        int val = raf.read(buf); //da "raf" leggo "buf" bytes
-        
-     
-        byte[] plainBytesDecrypted = null; // Reinitialize the Cipher to decryption mode
-        
-        if(val != -1) { //se sono stati letti dei bytes
-        	try {
-    			cipherBytes = cipher.doFinal(buf);
-    			//bw.write(cipherBytes); //scrive in "bw" i bytes salvati dentro "buf"
-    			
-    			
-    			cipher.init(Cipher.DECRYPT_MODE, key, cipher.getParameters());
-    			plainBytesDecrypted = cipher.doFinal(cipherBytes);
-    			
-    			bw.write(plainBytesDecrypted);
-    			
-    		} catch (IllegalBlockSizeException | BadPaddingException e) {
-    			e.printStackTrace();
-    		} catch (InvalidKeyException | InvalidAlgorithmParameterException e) {
-    			e.printStackTrace();
-    		}      
-        }
+      //WRITING ON FILE
+        if(getRaf().read(buf) != -1)
+        	cos.write(buf);
 	}
 	
 	@Override
 	public void mainDivision(long numSplits, long bytesPerSplit, int maxReadBufferSize, long sourceSize) throws IOException{
-		
-		for(int destIx=1; destIx <= numSplits; destIx++) {	
-            BufferedOutputStream bw = null;
+	    String name = null;
+	    CipherOutputStream cos = null;
+	    
+		for(int destIx=1; destIx <= numSplits; destIx++) {
+            name = getFileName()+destIx+"C"+getFileFormat();
 			try {
-				bw = new BufferedOutputStream(new FileOutputStream(getFileName()+destIx+"C"+getFileFormat()));
+				FileOutputStream fos = new FileOutputStream(name);
+				encrypt(name, fos, cos);
+				cos = new CipherOutputStream(fos, cipher);
+				
 			} catch (FileNotFoundException e) {
 				System.err.println(getFileName()+getFileFormat()+" NOT FOUND !");
 			}
@@ -120,24 +96,49 @@ public class Crypto extends Split{
                 long numReads = bytesPerSplit/maxReadBufferSize;
                 long numRemainingRead = bytesPerSplit % maxReadBufferSize;
                 for(int i=0; i<numReads; i++) {
-                	readWrite(getRaf(), bw, maxReadBufferSize);
+                	readWrite(cos, maxReadBufferSize);
                 }
                 if(numRemainingRead > 0) {
-                	readWrite(getRaf(), bw, numRemainingRead);
+                	readWrite(cos, numRemainingRead);
                 }
             }else {
-            	readWrite(getRaf(), bw, bytesPerSplit);
+            	readWrite(cos, bytesPerSplit);
             }
-            bw.close();
+            cos.flush();
+            cos.close();
         }
 	}
 	
-	@Override
     public void checkFileRemaining(long remainingBytes, long numSplits) throws IOException{
-
-    	BufferedOutputStream bw = new BufferedOutputStream(new FileOutputStream(getFileName()+(numSplits+1)+"C"+getFileFormat()));
-    	readWrite(getRaf(), bw, remainingBytes);
-    	bw.close();
+		String name = getFileName()+(numSplits+1)+"C"+getFileFormat();
+    	CipherOutputStream cos = new CipherOutputStream(new FileOutputStream(name), cipher);
+    	readWrite(cos, remainingBytes);
+    	cos.flush();
+    	cos.close();
+    }
+	
+	@Override
+	public void action(long numSplits, long bytesPerSplit, int maxReadBufferSize, long sourceSize) throws IOException{
+		String passwd = null;
+		
+		// SET KEY
+		BufferedReader buffer = new BufferedReader(new InputStreamReader(System.in));
+	       System.out.print("Inserire la password: ");
+	    try {
+			passwd = buffer.readLine();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	    setKey(passwd);
+		
+    	mainDivision(numSplits, bytesPerSplit, maxReadBufferSize, sourceSize);
+    	
+    	long remainingBytes = sourceSize % bytesPerSplit;
+    	
+    	if(remainingBytes > 0){
+    		checkFileRemaining(remainingBytes, numSplits);
+    	}
+        getRaf().close();
     }
 
 }

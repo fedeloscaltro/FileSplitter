@@ -1,12 +1,7 @@
 package principal;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.zip.ZipOutputStream;
 
 import javax.swing.*;
 
@@ -45,7 +40,7 @@ public class Main {
 		RandomAccessFile raf = null;
         
         int decision, action = 2;
-        decision = 4;
+        decision = 2;
         char letter;
         long sourceSize = 0;
       
@@ -53,7 +48,7 @@ public class Main {
         long bytesPerSplit, remainingBytes, numSplits;
 
         int maxReadBufferSize = 8 * 1024; //8KB
-        
+        Crypto cp = null;
         
         if (action==1){
         	fullPath = "C:/Users/stefano.scaltriti/Git/FileSplitter"
@@ -64,10 +59,11 @@ public class Main {
         	
             raf =  new RandomAccessFile(fullPath, "r");
             sourceSize = raf.length();
+            
         	
         	switch(decision){
 	        	case 1: //Divisione in più parti specificando la DIMENSIONE di ogni parte (default)
-	        		bytesPerSplit = 1024000; //100 mln B
+	        		bytesPerSplit = 102400000; //100 mln B
 	        		numSplits = sourceSize/bytesPerSplit;
 
 	        		Split sd = new Split(fileName, fileFormat, raf);
@@ -77,9 +73,9 @@ public class Main {
 	        	case 2: //Divisione in più parti specificando la dimensione di ogni parte e 
 	        		//crittografando il contenuto dei file generati tramite una chiave 
 	        		//(che può essere la stessa per tutti i file)
-	        		bytesPerSplit = 102400000; //100 mln B
+	        		bytesPerSplit = 1024000; //100 mln B
 	        		numSplits = sourceSize/bytesPerSplit;
-	        		Crypto cp = new Crypto(fileName, fileFormat, raf);
+	        		cp = new Crypto(fileName, fileFormat, raf);
 	        		cp.action(numSplits, bytesPerSplit, maxReadBufferSize, sourceSize);
 	        		break;
 	        		
@@ -100,11 +96,10 @@ public class Main {
 	        		
 	        		//deleting the main zipped file
 	        		File file = new File(fileName+zipExtension);
-	        		if(file.delete()){
+	        		if(file.delete())
 	        			System.out.println(file.getName() + " is deleted!");
-	        		}else{
+	        		else
 	        			System.err.println("Delete operation failed");
-	        		}
 	        		
 	        		break;
 	        		
@@ -116,7 +111,7 @@ public class Main {
 	        		st.action(numSplits, bytesPerSplit, maxReadBufferSize, sourceSize);
 	        		break;
 	        }
-        } else{
+        }else{
         	Merger m = null;
         	switch(decision){
         		case 1:
@@ -132,11 +127,23 @@ public class Main {
         			m.merge(letter);
         			break;
         		case 2:
+        			letter = 'C';
+        			fullPath = "C:/Users/stefano.scaltriti/Git/FileSplitter"
+        		    		+ "/FileSplitter_Scaltriti_Federico/Muse1C.mp3";
+        			directory = fullPath.substring(0, fullPath.lastIndexOf("/")+1);
+                	fileFormat = fullPath.substring(fullPath.lastIndexOf("."), fullPath.length());
+                	fileName = fullPath.substring(fullPath.lastIndexOf("/")+1, fullPath.lastIndexOf("."));
+                	System.out.println("directory: "+directory+'\n'+"fileFormat: "+fileFormat+'\n'+"fileName: "+fileName);
+        			
+                	//cp = new Crypto(fileName, fileFormat, raf);
+        			m = new Merger(fileName, fileFormat); //directory+fileName+1+letter+fileFormat
+        			m.decrypt(fileName);
+        			//cp.decrypt(fileName);
         			break;
         		case 3:
         			letter = 'Z';
         			fullPath = "C:/Users/stefano.scaltriti/Git/FileSplitter"
-        		    		+ "/FileSplitter_Scaltriti_Federico/Muse1T.mp3";
+        		    		+ "/FileSplitter_Scaltriti_Federico/Muse1Z.zip";
         			directory = fullPath.substring(0, fullPath.lastIndexOf("/")+1);
                 	fileFormat = fullPath.substring(fullPath.lastIndexOf("."), fullPath.length());
                 	fileName = fullPath.substring(fullPath.lastIndexOf("/")+1, fullPath.lastIndexOf("."));
@@ -144,6 +151,13 @@ public class Main {
         			
                 	m = new Merger(fileName, fileFormat); //directory+fileName+1+letter+fileFormat
         			m.merge(letter);
+        			m.unZip();
+        			File file = new File(fileName.substring(0, fileName.length()-2)+zipExtension);
+	        		
+        			if(file.delete())
+	        			System.out.println(file.getName() + " is deleted!");
+	        		else
+	        			System.err.println("Delete operation failed");
                 	break;
         		case 4:
         			letter = 'T';
