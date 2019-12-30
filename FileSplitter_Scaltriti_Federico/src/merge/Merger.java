@@ -23,6 +23,7 @@ import javax.crypto.CipherInputStream;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import utils.*;
@@ -88,14 +89,11 @@ public class Merger {
     }
 	
 	
-	public void decrypt(String fileName) throws IOException{
-		byte[] cipherBytes = null;
+	public void decrypt() throws IOException{//String fileName
 		byte[] buf = new byte[(int) 8*1024];
 		BufferedOutputStream bos = null;
 		FileInputStream fis = null;
 		Cipher cipher = null;
-		// Generate the key first
-        //Key key = keyGeneration();
 		String passwd = null;
 		
 		// SET KEY
@@ -108,38 +106,56 @@ public class Merger {
 		}
         setKey(passwd);
         
-		try {
-			cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-			cipher.init(Cipher.DECRYPT_MODE, secretKey);
-		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException e) {
-			e.printStackTrace();
-		}
         
         
         File f = new File(fileName+fileFormat); //Muse1D+.mp3
         System.out.println("fileName: "+fileName+"\nfileFormat: "+fileFormat);
-        bos = new BufferedOutputStream(new FileOutputStream(fileName+fileFormat));
+        bos = new BufferedOutputStream(new FileOutputStream(fileName.substring(0, fileName.lastIndexOf("1"))+fileFormat));
         int c = 1;
         char letter = 'C';
         CipherInputStream in = null;
         /*----------------------------------------------------*/
+        byte[] iv = null;
         
         while (f.exists()){	
         	fis = new FileInputStream(f.getName());
+        	
+        	//se si è alla prima lettura, catturo l'iv e setto il cipher e il CipherInputStream
+        	if (c == 1){
+        		iv = new byte[16];
+        		fis.read(iv, 0, iv.length); //carico in iv i 16 byte
+        		IvParameterSpec ivspec = new IvParameterSpec(iv);
+        		try {
+        			cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        			cipher.init(Cipher.DECRYPT_MODE, secretKey, ivspec);
+        		} catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | InvalidAlgorithmParameterException e) {
+        			e.printStackTrace();
+        		}
+        	}
         	in = new CipherInputStream(fis, cipher);
-        	if (f.length()>buf.length){
-        		long numReads = f.length()/buf.length;
-            	long bytesRemaining = f.length()%buf.length;
-            	for(int i=0; i<numReads; i++) {
+        		
+        	if (f.length() > buf.length){
+        		long numReads = f.length() / buf.length;
+            	long bytesRemaining = f.length() % buf.length;
+            	System.out.println("numReads: "+numReads+" bytesRemaining: "+bytesRemaining);
+            	for(int i = 0; i<numReads; i++) {
             		writeCrypt(in, bos, buf.length);
                 }
-                if(bytesRemaining > 0) {
+            	System.out.println("bytesRemaining: "+bytesRemaining);
+                if(bytesRemaining > 0)
                 	writeCrypt(in, bos, bytesRemaining);
-                }
-        	}
+        	}else
+        		writeCrypt(in, bos, f.length());
         	
+//        	int cont;
+//            
+//            while((cont = in.read(buf)) >= 0) {
+//                bos.write(buf, 0, cont);
+//                System.out.println("contD: "+cont);
+//            }
+            
+        	in.close();
         	f = new File(fileName.substring(0, fileName.lastIndexOf("1"))+(++c)+letter+fileFormat);
-        	bos = new BufferedOutputStream(new FileOutputStream(f.getName()));
         }
         /*----------------------------------------------------*/		
 		bos.close();
@@ -147,19 +163,29 @@ public class Merger {
 	
 	public void writeCrypt(CipherInputStream cis, BufferedOutputStream bos, long numBytes) throws IOException{
         byte[] b = new byte[(int) numBytes];
+        System.out.println("b.length(): "+b.length);
+        int cont, contTot = 0;
         
-        int val = cis.read(b);
-        if(val != -1) {
-            bos.write(b);
-        }
+//        cont = cis.read(b, 0, b.length);
+//        contTot+= cont;
+        cont = cis.read(b, 0, b.length);
+        int totCont = b.length / cont;
         
-//        int val = fis.read(buf);
-//        if(val != -1) {
-//            bos.write(buf);
+        for (int i = 1; i < totCont; i++) {
+        	bos.write(b, 0, cont);
+        	System.out.println("cont: "+cont);
+        	cont = cis.read(b, 0, b.length);
+		}
+        	
+        	
+        	//contTot+= cont;
+        //}
+        
+//        if((cont = cis.read(b, 0, b.length)) >= 0) {
+//        		System.out.println("cont: "+cont);
+//        		bos.write(b, 0, cont);
 //        }
-//        while (cis.read(b) >= 0) {
-//            baos.write(b, 0, numBytes);
-//        }
+        
 	}
 	
 	public void unZip(){

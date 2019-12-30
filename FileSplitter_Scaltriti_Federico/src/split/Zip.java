@@ -10,11 +10,12 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import static utils.Const.BUFF;
 
-public class Zip extends Split{
+public class Zip extends Split implements Runnable{
     
-	public Zip(String fileName, String fileFormat, RandomAccessFile raf) {
-		super(fileName, fileFormat, raf);
+	public Zip(String fileName, String fullPath, RandomAccessFile raf, long numSplits, long bytesPerSplit, long sourceSize) {
+		super(fileName, fullPath, raf, numSplits, bytesPerSplit, sourceSize);
 	}
 
 	
@@ -27,11 +28,13 @@ public class Zip extends Split{
 	     
 	    ZipOutputStream zos = null;
 	    try {
-	        // create byte buffer
+	        // creo un buffer di byte
 	        byte[] buffer = new byte[8*1024]; // 8kB
+	        //creo gli stream
 	        FileOutputStream fos = new FileOutputStream(zipFile);
 	        zos = new ZipOutputStream(fos);
 	         
+	        //per ogni file da zippare
 	        for (int i=0; i < srcFiles.length; i++) {
 	            File srcFile = new File(srcFiles[i]);
 	            
@@ -42,17 +45,16 @@ public class Zip extends Split{
 	         
 	            int length;
 	            
+	            //lettura e scrittura direttamente nello stream specifico per la compressione
 	            while ((length = fis.read(buffer)) > 0) {
 	                zos.write(buffer, 0, length);
 	            }
 	            zos.closeEntry();
-	            // close the InputStream
+	            // chiusura dell'InputStream
 	            fis.close();
 	        }
-	        // close the ZipOutputStream
+	        // chiusura dello ZipOutputStream
 	        zos.close();
-	        
-	        
 	         
 	    }catch (IOException ioe) {
 	        System.out.println("Error creating zip file: " + ioe);
@@ -60,7 +62,7 @@ public class Zip extends Split{
 	}
 	
 	@Override
-	public void mainDivision(long numSplits, long bytesPerSplit, int maxReadBufferSize, long sourceSize) throws IOException{
+	public void mainDivision(long numSplits, long bytesPerSplit, long sourceSize) throws IOException{
 		long numReads, numRemainingRead;
 		String name = null;
 		
@@ -72,11 +74,11 @@ public class Zip extends Split{
 			} catch (FileNotFoundException e) {
 				System.err.println(getFileName()+".zip"+" NOT FOUND !");
 			}
-            if(bytesPerSplit > maxReadBufferSize) {
-                numReads = bytesPerSplit/maxReadBufferSize;
-                numRemainingRead = bytesPerSplit % maxReadBufferSize;
+            if(bytesPerSplit > BUFF) {
+                numReads = bytesPerSplit/BUFF;
+                numRemainingRead = bytesPerSplit % BUFF;
                 for(int i=0; i<numReads; i++) {
-                	readWrite(name, bw, maxReadBufferSize);
+                	readWrite(name, bw, BUFF);
                 }
                 if(numRemainingRead > 0) {
                 	readWrite(name, bw, numRemainingRead);
@@ -91,9 +93,28 @@ public class Zip extends Split{
 	
 	@Override
     public void checkFileRemaining(long remainingBytes, long numSplits) throws IOException{
-		String name = getFileName()+(numSplits+1)+"Z"+getFileFormat();
+		String fileFormat = getFullPath().substring(getFullPath().lastIndexOf("."), getFullPath().length());
+		String name = getFileName()+(numSplits+1)+"Z"+fileFormat;
     	BufferedOutputStream bw = new BufferedOutputStream(new FileOutputStream(name));
     	readWrite(name, bw, remainingBytes);
     	bw.close();
     }
+	
+	@Override
+	public void run() {
+		//considero eventuali bytes restanti per una divisione finale
+    	long remainingBytes = getSourceSize() % getBytesPerSplit();
+    	
+    	try {
+    		//attuo la divisione principale
+			mainDivision(getNumSplits(), getBytesPerSplit(), getSourceSize());
+			
+			if(remainingBytes > 0)
+				checkFileRemaining(remainingBytes, getNumSplits());
+			
+			getRaf().close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 }
