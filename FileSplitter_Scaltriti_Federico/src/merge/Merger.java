@@ -1,6 +1,7 @@
 package merge;
 
 import java.io.BufferedOutputStream;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -26,17 +27,25 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import utils.*;
+import static utils.Const.*;
 
-public class Merger {
-	private String fileName;
-	private String fileFormat;
+public class Merger{
+	private String fileName,fileFormat, destination;
 	private SecretKeySpec secretKey;
+	private String filePath;
+	private long size;
 	
-	public Merger(String fileName, String fileFormat){
-		this.fileName = fileName;
-		this.fileFormat = fileFormat;
+	public Merger(String fileName, String fileFormat, String destination){ //TODO aggiungi il destinationFolder
+		setFileName(fileName);
+		setFileFormat(fileFormat);
+		setDestination(destination);
 	}
+	
+	public Merger(String fileName, String filePath){
+		setFileName(fileName);
+		setFilePath(filePath);
+	}
+	
 	private void setKey(String passwd){
 		byte[] hash;
         
@@ -51,6 +60,14 @@ public class Merger {
 			e1.printStackTrace();
 		}
 	}
+	public void readWriteZip(ZipInputStream zis, FileOutputStream bos, long numBytes) throws IOException {
+        byte[] buf = new byte[(int) numBytes];
+        int val = zis.read(buf);
+        if(val != -1) {
+            bos.write(buf);
+        }
+	}
+	
 	public void readWrite(FileInputStream fis, BufferedOutputStream bos, long numBytes) throws IOException {
         byte[] buf = new byte[(int) numBytes];
         int val = fis.read(buf);
@@ -59,66 +76,26 @@ public class Merger {
         }
 	}
 	
-	public void merge(char letter) throws IOException{
-        FileInputStream fis; 
-        
-        int c = 1;
-        File f = new File(fileName+fileFormat); //Muse1D+.mp3
-        String realName = fileName.substring(0, fileName.lastIndexOf("1"));
-        BufferedOutputStream bos = null;
-        bos = new BufferedOutputStream(new FileOutputStream(realName+fileFormat));
-        byte[] buf = new byte[8*1024]; 
-        
-        while (f.exists()){	
-        	fis = new FileInputStream(f.getName());
-        	if (f.length()>buf.length){
-        		long numReads = f.length()/buf.length;
-            	long bytesRemaining = f.length()%buf.length;
-            	for(int i=0; i<numReads; i++) {
-            		readWrite(fis, bos, buf.length);
-                }
-                if(bytesRemaining > 0) {
-                	readWrite(fis, bos, bytesRemaining);
-                }
-        	}
-        	
-        	f = new File(fileName.substring(0, fileName.lastIndexOf("1"))+(++c)+letter+fileFormat);
-        }
-        
-        bos.close();
-    }
 	
-	
-	public void decrypt() throws IOException{//String fileName
-		byte[] buf = new byte[(int) 8*1024];
+	public void decrypt(String originalDirectory, String passwd) throws IOException{//String fileName
+		byte[] buf = new byte[(int) BUFF];
 		BufferedOutputStream bos = null;
 		FileInputStream fis = null;
 		Cipher cipher = null;
-		String passwd = null;
 		
-		// SET KEY
-		BufferedReader buffer = new BufferedReader(new InputStreamReader(System.in));
-	       System.out.print("Inserire la password: ");
-	    try {
-			passwd = buffer.readLine();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
         setKey(passwd);
         
-        
-        
-        File f = new File(fileName+fileFormat); //Muse1D+.mp3
+        File f = new File(originalDirectory+fileName+fileFormat); //Muse1D+.mp3
         System.out.println("fileName: "+fileName+"\nfileFormat: "+fileFormat);
-        bos = new BufferedOutputStream(new FileOutputStream(fileName.substring(0, fileName.lastIndexOf("1"))+fileFormat));
+        bos = new BufferedOutputStream(new FileOutputStream(getDestination()+fileName.substring(0, fileName.lastIndexOf("1"))+fileFormat));
         int c = 1;
-        char letter = 'C';
+        char letter = getFileName().charAt(getFileName().length()-1);
         CipherInputStream in = null;
         /*----------------------------------------------------*/
         byte[] iv = null;
         
         while (f.exists()){	
-        	fis = new FileInputStream(f.getName());
+        	fis = new FileInputStream(originalDirectory+f.getName());
         	
         	//se si è alla prima lettura, catturo l'iv e setto il cipher e il CipherInputStream
         	if (c == 1){
@@ -155,9 +132,9 @@ public class Merger {
 //            }
             
         	in.close();
-        	f = new File(fileName.substring(0, fileName.lastIndexOf("1"))+(++c)+letter+fileFormat);
+        	f = new File(originalDirectory+fileName.substring(0, fileName.lastIndexOf("1"))+(++c)+letter+fileFormat);
         }
-        /*----------------------------------------------------*/		
+        fis.close();
 		bos.close();
 	}
 	
@@ -188,37 +165,105 @@ public class Merger {
         
 	}
 	
-	public void unZip(){
-		String srcFile = "C:/Users/stefano.scaltriti/Git/FileSplitter"
-	    		+ "/FileSplitter_Scaltriti_Federico/Muse.zip";
-		String unzippedFile = "C:/Users/stefano.scaltriti/Git/FileSplitter"
-	    		+ "/FileSplitter_Scaltriti_Federico/Muse.mp3";
-		
-		ZipInputStream zis = null;
-		
-		byte[] buffer = new byte[8*1024]; // 8kB
-		
-        try {
-			FileOutputStream fos = new FileOutputStream(unzippedFile);
-			FileInputStream fis = new FileInputStream(srcFile);
-	        zis = new ZipInputStream(fis);
-	        //for (int i=0; i < srcFile.length(); i++) {
-	        zis.getNextEntry();
-	        
-	        int length;
-            while ((length = zis.read(buffer)) > 0) {
-                fos.write(buffer, 0, length);
-            }
-            zis.closeEntry();
-            // close the InputStream
-            fis.close();
-            fos.close();
-	        //}
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e){
-			e.printStackTrace();
-		}
+	public void merge(String originalDirectory) throws IOException{
+        FileInputStream fis; 
         
+        int c = 1;
+        File f = new File(originalDirectory+fileName+fileFormat); //directory+Muse1D+.mp3				
+        String realName = fileName.substring(0, fileName.lastIndexOf("1"));							
+        BufferedOutputStream bos = null;													
+        bos = new BufferedOutputStream(new FileOutputStream(getDestination()+realName+fileFormat)); 
+        byte[] buf = new byte[BUFF]; 																
+        
+        char letter = getFileName().charAt(getFileName().length()-1);								
+        
+        while (f.exists()){																			
+        	fis = new FileInputStream(originalDirectory+f.getName());							
+        	if (f.length()>buf.length){
+        		long numReads = f.length()/buf.length;
+            	long bytesRemaining = f.length()%buf.length;
+            	for(int i=0; i<numReads; i++) {
+            		readWrite(fis, bos, buf.length);													
+                }
+                if(bytesRemaining > 0) {
+                	readWrite(fis, bos, bytesRemaining);
+                }
+        	}
+        	
+        	f = new File(originalDirectory+fileName.substring(0, fileName.lastIndexOf("1"))+(++c)+letter+fileFormat);
+        }
+        
+        bos.close();
+    }
+	
+	public void mergeZip(String originalDirectory) throws IOException{
+        FileInputStream fis = null; 
+        ZipInputStream zis = null;
+        
+        int c = 1;
+        File f = new File(originalDirectory+fileName+fileFormat); //directory+Muse1D+.mp3				
+        String realName = fileName.substring(0, fileName.lastIndexOf("1"));			
+        FileOutputStream fos = null;													
+        fos = new FileOutputStream(getDestination()+realName+fileFormat); //same
+        byte[] buf = new byte[BUFF]; 														
+        
+        char letter = getFileName().charAt(getFileName().length()-1);								
+        
+        while (f.exists()){																			
+        	fis = new FileInputStream(originalDirectory+f.getName());
+        	zis = new ZipInputStream(fis);
+        	zis.getNextEntry();
+        	
+        	int length;
+            while ((length = zis.read(buf)) > 0) {
+                fos.write(buf, 0, length);
+            }
+            
+            zis.closeEntry();
+        	fis.close();
+        	f = new File(originalDirectory+fileName.substring(0, fileName.lastIndexOf("1"))+(++c)+letter+fileFormat);
+        }
+        
+        fos.close();
+    }
+
+	public String getFileName() {
+		return fileName;
+	}
+
+	public void setFileName(String fileName) {
+		this.fileName = fileName;
+	}
+
+	public String getFileFormat() {
+		return fileFormat;
+	}
+
+	public void setFileFormat(String fileFormat) {
+		this.fileFormat = fileFormat;
+	}
+
+	public String getFilePath() {
+		return filePath;
+	}
+
+	public void setFilePath(String filePath) {
+		this.filePath = filePath;
+	}
+
+	public long getSize() {
+		return size;
+	}
+
+	public void setSize(long size) {
+		this.size = size;
+	}
+
+	public String getDestination() {
+		return destination;
+	}
+
+	public void setDestination(String destination) {
+		this.destination = destination;
 	}
 }

@@ -1,4 +1,4 @@
-package principal;
+package gui;
 
 import java.util.Vector;
 
@@ -11,7 +11,7 @@ import split.Split;
 public class MyTableModel extends DefaultTableModel{
 	
 	private static final long serialVersionUID = 1L;
-	private Vector v = null;
+	private Vector<?> v = null;
 	Split sp;
 	int offset = 0;
 	// intestazioni delle colonne
@@ -34,21 +34,21 @@ public class MyTableModel extends DefaultTableModel{
 		// la stringa corrispondente alla colonna
 		switch (columnIndex){
 
-			case 0: return sp.getFileName();
+			case 0: return sp.getFullFileName();
 			case 1: return sp.getFullPath();
 			case 2: return sp.getSourceSize();
 			case 3: 
-				switch(sp.getClass().getCanonicalName()){
-					case "split.Split":
+				switch(sp.getDecision()){
+					case 1:
 						return "Split";
-					case "split.Crypto":
+					case 2:
 						return "Crypto";
-					case "split.Zip":
+					case 3:
 						return "Zip";
-					case "split.SplitTimes":
+					case 4:
 						return "Split Times";
 				}
-				return sp.getClass().getCanonicalName();
+				return sp.getDecision();
 							
 			default: return null;
 		}

@@ -2,115 +2,125 @@ package split;
 
 import java.io.BufferedOutputStream;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-import static utils.Const.BUFF;
+import static utils.Const.*;
+
+
+/**
+ * Classe che implementa la divisione di un file comprimendo il relativo contenuto.
+ * È sottoclasse di {@link Split}
+ * @see Runnable
+ * */
 
 public class Zip extends Split implements Runnable{
     
-	public Zip(String fileName, String fullPath, RandomAccessFile raf, long numSplits, long bytesPerSplit, long sourceSize) {
-		super(fileName, fullPath, raf, numSplits, bytesPerSplit, sourceSize);
-	}
-
 	
-	public static void compress(){
-	    String zipFile = "C:/Users/stefano.scaltriti/Git/FileSplitter"
-    		+ "/FileSplitter_Scaltriti_Federico/Muse.zip";
-	    
-	    String srcFiles[] = {"C:/Users/stefano.scaltriti/Git/FileSplitter"
-	    		+ "/FileSplitter_Scaltriti_Federico/Muse.mp3"};
-	     
-	    ZipOutputStream zos = null;
-	    try {
-	        // creo un buffer di byte
-	        byte[] buffer = new byte[8*1024]; // 8kB
-	        //creo gli stream
-	        FileOutputStream fos = new FileOutputStream(zipFile);
-	        zos = new ZipOutputStream(fos);
-	         
-	        //per ogni file da zippare
-	        for (int i=0; i < srcFiles.length; i++) {
-	            File srcFile = new File(srcFiles[i]);
-	            
-	            FileInputStream fis = new FileInputStream(srcFile);
-	
-	            // begin writing a new ZIP entry, positions the stream to the start of the entry data
-	            zos.putNextEntry(new ZipEntry(srcFile.getName()));
-	         
-	            int length;
-	            
-	            //lettura e scrittura direttamente nello stream specifico per la compressione
-	            while ((length = fis.read(buffer)) > 0) {
-	                zos.write(buffer, 0, length);
-	            }
-	            zos.closeEntry();
-	            // chiusura dell'InputStream
-	            fis.close();
-	        }
-	        // chiusura dello ZipOutputStream
-	        zos.close();
-	         
-	    }catch (IOException ioe) {
-	        System.out.println("Error creating zip file: " + ioe);
-	    }
+	/**
+	 * Costruttore dello splitter nel caso si voglia attuare la crittografia.
+	 * Chiamato in fase di divisione una volta presa la decisione di dividere i file scelti.
+	 * @param fileName nome del file.
+	 * @param fullPath percorso in cui si trova il file selezionato.
+	 * @param destinationFolder cartella di destinazione del file una volta diviso.
+	 * @param raf file da cui iniziare.
+	 * @param bytesPerSplit dimensione data da utente di ogni nuovo file.
+	 * @param sourceSize dimensione del file iniziale.
+	 * */
+	public Zip(String fileName, String fullPath, String destinationFolder, RandomAccessFile raf, long bytesPerSplit, long sourceSize) {
+		super(fileName, fullPath, destinationFolder, raf, bytesPerSplit, sourceSize);
 	}
 	
+	/**
+	 * {@inheritDoc}
+	 * */
 	@Override
-	public void mainDivision(long numSplits, long bytesPerSplit, long sourceSize) throws IOException{
+	public void mainDivision(long numSplits) throws IOException{
 		long numReads, numRemainingRead;
-		String name = null;
+		String newFullName = null;
+		String fileFormat = getFullPath().substring(getFullPath().lastIndexOf("."), getFullPath().length());
 		
 		for(int destIx=1; destIx <= numSplits; destIx++) {	
-            BufferedOutputStream bw = null;
+            ZipOutputStream zos = null;
 			try {
-				name = getFileName()+destIx+"Z"+".zip";
-				bw = new BufferedOutputStream(new FileOutputStream(name));
+				newFullName = getFullFileName()+destIx+"Z"+fileFormat;
+				zos = new ZipOutputStream(new FileOutputStream(getDestinationFolder()+newFullName));
+				
+				// inizio scrivendo una nuova ZIP entry, posiziono lo stream all'inizio dell'entry data
+		        zos.putNextEntry(new ZipEntry(getDestinationFolder()+newFullName));
 			} catch (FileNotFoundException e) {
-				System.err.println(getFileName()+".zip"+" NOT FOUND !");
+				System.err.println(newFullName+" NOT FOUND !");
 			}
-            if(bytesPerSplit > BUFF) {
-                numReads = bytesPerSplit/BUFF;
-                numRemainingRead = bytesPerSplit % BUFF;
+            if(getBytesPerSplit() > BUFF) {
+                numReads = getBytesPerSplit()/BUFF;
+                numRemainingRead = getBytesPerSplit() % BUFF;
                 for(int i=0; i<numReads; i++) {
-                	readWrite(name, bw, BUFF);
+                	readWrite(zos, BUFF);
+                	setReadBytes(BUFF);
                 }
                 if(numRemainingRead > 0) {
-                	readWrite(name, bw, numRemainingRead);
+                	readWrite(zos, numRemainingRead);
+                	setReadBytes(numRemainingRead);
                 }
 	            
             }else {
-            	readWrite(name, bw, bytesPerSplit);
+            	readWrite(zos, getBytesPerSplit());
+            	setReadBytes(getBytesPerSplit());
             }
-            bw.close();
+            zos.close();
         }
 	}
 	
+	/**
+	 * {@inheritDoc}
+	 * */
 	@Override
     public void checkFileRemaining(long remainingBytes, long numSplits) throws IOException{
 		String fileFormat = getFullPath().substring(getFullPath().lastIndexOf("."), getFullPath().length());
-		String name = getFileName()+(numSplits+1)+"Z"+fileFormat;
-    	BufferedOutputStream bw = new BufferedOutputStream(new FileOutputStream(name));
-    	readWrite(name, bw, remainingBytes);
-    	bw.close();
+		String newFullName = getFullFileName()+(++numSplits)+"Z"+fileFormat;
+		
+		System.out.println("newFullName: "+newFullName);
+		
+		//imposto un nuovo BufferedOutputStream
+    	ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(getDestinationFolder()+newFullName));
+    	zos.putNextEntry(new ZipEntry(getDestinationFolder()+newFullName));
+    	readWrite(zos, remainingBytes); 	//leggo i bytes richiesti
+    	setReadBytes(remainingBytes);	//li aggiungo al totale dei bytes letti
+    	zos.flush();
+    	zos.close();						//chiudo lo stream
     }
 	
+	/**
+	 * Metodo per leggere un certo quantitativo di bytes
+     * @param zos stream compresso in cui scrivere i byte
+     * @param numBytes il totale di bytes da leggere
+	 * */
+	public void readWrite(ZipOutputStream zos, long numBytes) throws IOException {
+        byte[] buf = new byte[(int) numBytes];
+        int val = getRaf().read(buf);
+        if(val != -1) {
+            zos.write(buf);
+        }
+	}
+	
+	/**
+	 * {@inheritDoc}
+	 * */
 	@Override
 	public void run() {
-		//considero eventuali bytes restanti per una divisione finale
-    	long remainingBytes = getSourceSize() % getBytesPerSplit();
+    	long remainingBytes = getSourceSize() % getBytesPerSplit(); //considero eventuali bytes restanti per una divisione finale
     	
     	try {
-    		//attuo la divisione principale
-			mainDivision(getNumSplits(), getBytesPerSplit(), getSourceSize());
+    		long numSplits = getSourceSize()/getBytesPerSplit();
+			mainDivision(numSplits); 		//attuo la divisione principale
 			
-			if(remainingBytes > 0)
-				checkFileRemaining(remainingBytes, getNumSplits());
+			if(remainingBytes > 0){ 		//controllo la presenza di bytes rimanenti
+				System.err.println("Ci entra");
+				checkFileRemaining(remainingBytes, numSplits);
+			}			
 			
 			getRaf().close();
 		} catch (IOException e) {
