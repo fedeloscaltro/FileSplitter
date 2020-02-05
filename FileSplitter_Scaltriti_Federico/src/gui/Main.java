@@ -1,16 +1,6 @@
 package gui;
 
-import java.awt.CardLayout;
-import java.io.File;
-import java.io.RandomAccessFile;
-
 import javax.swing.*;
-
-import merge.Merger;
-import split.Crypto;
-import split.Split;
-import split.SplitTimes;
-import split.Zip;
 
 public class Main {
 

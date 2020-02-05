@@ -14,43 +14,33 @@ import javax.swing.border.EmptyBorder;
 
 import split.*;
 
-public class PanelSplit extends JPanel implements ActionListener{
+/**
+ * Classe per inizializzare il pannello per la gestione grafica della divisione dei file
+ * @see JPanel
+ * @see ActionListener
+ * */
+
+public class PanelSplit extends JPanel implements ActionListener{	
 	/**
-	 * @param v vettore contenente gli elementi da aggiungere alla tabella
-	 * @param dataModel TableModel che specifica i metodi per gestire la JTable
-	 * @param browse JButton che attiva la ricerca per la selezione del/dei file da dividere
-	 * @param split JButton che avvia la divisione dei file
-	 * @param browseDestination JButton che permette in un JDialog di scegliere la cartella di destinazione dei file divisi
-	 * @param settingsOk JButton per confermare le impostazioni di divisione scelte per il singolo file
-	 * @param change JButton presente nel PanelSplit per cambiare le impostazioni del file scelto
-	 * @param delete JBUtton presente nel PanelSplit per eliminare tutti i file selezionati
-	 * @param t JTable per presentare graficamente i file selezionati
-	 * @param dimField JTextField per impostare la dimensione dei file da ottenere nel JDialog apposta
-	 * @param partsField JTextField per indicare il numero di file che si vogliono ottenere dalla divisione
-	 * @param destinationFolderField JTextField per indicare la cartella di destinazione
-	 * @param passwdField JTextField per immettere la password in caso di criptazione
-	 * @param dimLabel JLabel relativa al JTextField della dimensione
-	 * @param errorLabel JLabel per mostrare un messaggio in caso di errore in inserimento dei dati nel JDialog
-	 * @param passwdLabel JLabel relativa al JTextField della password
-	 * @param partsLabel JLabel relativa al JTextField del numero di parti
-	 * @param fileNameLabel JLabel relativa al nome del file selezionato
-	 * @param progressLabel JLabel indicante il progresso della divisione
-	 * @param radioSplit JRadioButton per la scelta, all'interno del JDialog, della divisione standard
-	 * @param radioCrypto JRadioButton per la scelta, all'interno del JDialog, della divisione cifrata
-	 * @param radioZip JRadioButton per la scelta, all'interno del JDialog, della divisione compressa
-	 * @param radioParts JRadioButton per la scelta, all'interno del JDialog, della divisione dato il numero di parti
-	 * @param selectedFiles singolo elenco di file presi nel momento della selezione
-	 * @param messageDialog JDialog usato per i messaggi d'errore
-	 * @param choiceDialog JDialog per le impostazioni di divisione
-	 * @param choices vettore per le scelte di divisione fatte
-	 * @param dims vettore per le dimensioni dei file da dividere
-	 * @param parts vettore per memorizzare i valori del numero di parti in cui dividere i file
-	 * @param destinations vettore per le cartelle di destinazione
-	 * @param passwords vetotre per le pasword inserite
-	 * @param totalFiles vettore con tutti i file selezionati fino a quel momento
-	 * @param contFile contatore di file selezionati che vengono processati 
-	 */
-	private Vector<Split> v;
+	 * Componenti grafici:
+	 * TableModel che specifica i metodi per gestire la JTable; 
+	 * Serie di JButton per: attivare la ricerca per la selezione del/dei file da dividere; 
+	 * avviare la divisione dei file; permettere in un JDialog di scegliere la cartella di destinazione dei file divisi;
+	 * confermare le impostazioni di divisione scelte per il singolo file; per cambiare, nel PanelSplit , le impostazioni del file scelto;
+	 * per eliminare tutti i file selezionati.
+	 * JTable per presentare graficamente i file selezionati;
+	 * Serie di JTextField per: impostare la dimensione dei file da ottenere nel JDialog apposta; 
+	 * indicare il numero di file che si vogliono ottenere dalla divisione; 
+	 * JPasswordField per immettere la password in caso di criptazione;
+	 * Serie di JLabel: relativa al JTextField della dimensione; per mostrare un messaggio di errore in inserimento dei dati nel JDialog;
+	 * relativa al JTextField della password; relativa al JTextField del numero di parti; relativa al nome del file selezionato;
+	 * indicante il progresso della divisione.
+	 * Serie di JRadioButton per la scelta, all'interno del JDialog della divisione: 
+	 * standard; cifrata; compressa; dato il numero di parti.
+	 * JDialog usato per i messaggi d'errore;
+	 * JDialog per le impostazioni di divisione;
+	 * 
+	 * */
 	private MyTableModel dataModel;
 	private JButton browse, split, browseDestination, settingsOk, change, delete;
 	private JTable t;
@@ -58,8 +48,17 @@ public class PanelSplit extends JPanel implements ActionListener{
 	private JPasswordField passwdField;
 	private JLabel dimLabel, errorLabel, passwdLabel, partsLabel, fileNameLabel, progressLabel;
 	private JRadioButton radioSplit, radioCrypto, radioZip, radioParts; 
-	private File[] selectedFiles;
 	private JDialog messageDialog, choiceDialog;
+	
+	/**
+	 * array contenente i file presi nel momento della singola selezione
+	 * Serie di vettori: contenente gli elementi da aggiungere alla tabella; per le scelte di divisione fatte;
+	 * per le dimensioni dei file da dividere; per memorizzare i valori del numero di parti in cui dividere i file;
+	 * per le cartelle di destinazione; per le pasword inserite; con tutti i file selezionati fino a un istante di tempo.
+	 * contatore di file selezionati che vengono processati 
+	 */
+	private File[] selectedFiles;
+	private Vector<Split> v;
 	private Vector<Integer> choices;
 	private Vector<Long> dims, parts;
 	private Vector<String> destinations;
@@ -91,8 +90,8 @@ public class PanelSplit extends JPanel implements ActionListener{
 		t = new JTable(dataModel);
 		t.getColumnModel().getColumn(0).setPreferredWidth(200);
 		t.getColumnModel().getColumn(1).setPreferredWidth(200);
-		// aggiunge la tabella al pannello
 		
+		//aggiunge la tabella al pannello
 		add(t);		
 		JScrollPane jsp = new JScrollPane(t); //pannello per contenere la tabella
 		up.add(jsp);
@@ -210,18 +209,9 @@ public class PanelSplit extends JPanel implements ActionListener{
 	}
 	
 	/**
-	 * Ogni volta che seleziono dei file, ripulisco la tabella:
-	 * rimuovo tutti gli elementi dal vettore, dalla tabella graficamente e comunico
-	 * il cambiamento
-	 * */
-	private void clearTable(){
-		v.removeAllElements();
-		dataModel.getDataVector().removeAllElements();
-		dataModel.fireTableDataChanged();
-	}
-	
-	/**
 	 * Metodo per impostare il layout del JDialog per le impostazioni di divisione
+	 * @param fileName JLabel contenente il nome del file selezionato
+	 * @param contentPane il pannello padre del JDialog
 	 * */
 	public void setDialogLayout(JLabel fileName, JPanel contentPane){
 		GroupLayout groupLayout= new GroupLayout(contentPane);
@@ -370,7 +360,7 @@ public class PanelSplit extends JPanel implements ActionListener{
 	}
 	
 	/**
-	 * Metodo per impostare il Dialog pre i messaggi d'errore
+	 * Metodo per impostare il Dialog per i messaggi d'errore
 	 * @param label JLabel contenente il messaggio da visualizzare
 	 * */
 	public void setMessageDialog(JLabel label){
@@ -447,6 +437,16 @@ public class PanelSplit extends JPanel implements ActionListener{
 	}
 	
 	/**
+	 * Metodo per pulire la tabella:
+	 * rimuovo tutti gli elementi dal vettore, dalla tabella graficamente e comunico il cambiamento
+	 * */
+	private void clearTable(){
+		v.removeAllElements();
+		dataModel.getDataVector().removeAllElements();
+		dataModel.fireTableDataChanged();
+	}
+	
+	/**
 	 * Metodo per verificare la presenza di un file all'interno del vettore
 	 * @param il valore della label da controllare 
 	 * @return la posizione dell'elemento nel vettore
@@ -484,17 +484,7 @@ public class PanelSplit extends JPanel implements ActionListener{
 	}
 	
 	/**
-	 * Metodo per l'aggiornamento della progressLabel.
-	 * In base a quanti bytes devo leggere e all'avanzamento, modifico il valore della progressLabel
-	 * @param readBytes bytes letti fino al momento della chiamata del metodo
-	 * @param totalBytes il totale dei bytes da leggere
-	 * */
-	public void handlerProgressLabel(long readBytes, long totalBytes){
-		progressLabel.setText((readBytes/totalBytes)*100+"%");
-	}
-	
-	/**
-	 * Metodo sovrascritto per la gestione degli eventi scaturiti dal click sui bottoni
+	 * Metodo sovrascritto per la gestione degli eventi scaturiti dal click sui JButton
 	 * */
 	@Override
 	public void actionPerformed(ActionEvent e) {
@@ -514,6 +504,7 @@ public class PanelSplit extends JPanel implements ActionListener{
 				selectedFiles = fileChooser.getSelectedFiles();
 				contFile = 0;
 				
+				//se ho effettivamente selezionato dei file
 				if(selectedFiles != null){
 					progressLabel.setText("0%");
 					setChoiceDialog(selectedFiles[0].getAbsolutePath(), true);
@@ -618,8 +609,6 @@ public class PanelSplit extends JPanel implements ActionListener{
 					totalBytes+= Long.parseLong(t.getModel().getValueAt(i, 2).toString());
 				}
 				
-				
-				
 				Split sp = null;
 		        Thread th = null;
 		        RandomAccessFile raf;
@@ -630,7 +619,7 @@ public class PanelSplit extends JPanel implements ActionListener{
 						long bytesPerSplit, numSplits, remainingBytes;
 						String fullPath = file.getAbsolutePath().substring(0, file.getAbsolutePath().indexOf(file.getName()));
 						
-						switch(choices.get(0)){
+						switch(choices.get(0)){ //in base alla scelta fatta
 							case 1:
 								bytesPerSplit = dims.get(0);
 				        		sp = new Split(file.getName(), fullPath+file.getName(), destinations.get(0), raf, bytesPerSplit, sourceSize);
@@ -660,6 +649,7 @@ public class PanelSplit extends JPanel implements ActionListener{
 						choices.remove(0);
 						destinations.remove(0);
 						
+						//inizializzo ed inizio un nuovo thread relativo allo splitter istanziato
 		                th = new Thread(sp);
 		        		th.start();
 						
@@ -667,7 +657,8 @@ public class PanelSplit extends JPanel implements ActionListener{
 						//avvio un thread per impostare l'avanzamento della progressLabel
 		        		Progress p = new Progress(th, sp, progressLabel, totalBytes);
 		        		p.execute();
-		        				        		
+		        				    
+		        		//pulisco la tabella dai file scelti per essere processati
 		        		clearTable();
 		        		
 					} catch (IOException  e1) {

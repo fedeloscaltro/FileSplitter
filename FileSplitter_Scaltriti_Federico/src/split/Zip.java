@@ -82,9 +82,7 @@ public class Zip extends Split implements Runnable{
 		String fileFormat = getFullPath().substring(getFullPath().lastIndexOf("."), getFullPath().length());
 		String newFullName = getFullFileName()+(++numSplits)+"Z"+fileFormat;
 		
-		System.out.println("newFullName: "+newFullName);
-		
-		//imposto un nuovo BufferedOutputStream
+		//imposto un nuovo ZipOutputStream
     	ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(getDestinationFolder()+newFullName));
     	zos.putNextEntry(new ZipEntry(getDestinationFolder()+newFullName));
     	readWrite(zos, remainingBytes); 	//leggo i bytes richiesti

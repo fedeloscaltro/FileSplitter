@@ -7,23 +7,41 @@ import javax.swing.table.DefaultTableModel;
 import merge.Merger;
 
 public class MergerTableModel  extends DefaultTableModel{
-	private static final long serialVersionUID = 1L;
+
+	/**
+	 * Vettore di dati da aggiungere alla tabella
+	 * */
 	private Vector<Merger> v = null;
-	Merger m;
-	int offset = 0;
-	// intestazioni delle colonne
+	
+	/**
+	 * Oggetto contenente i dati per la tabella
+	 * */
+	private Merger m;
+	
+	/**
+	 * Array contenente le intestazioni delle colonne
+	 * */ 
 	private String[] ColName = {"Nome", "Percorso"};
 
+	/**
+	 * Costruttore del TableModel
+	 * @param v vettore di dati da aggiungere
+	 * */
 	public MergerTableModel(Vector<Merger> v) {
-	this.v = v; // inizializzato con il vettore
+	this.v = v;
 	}
 	
+	/**
+	 * Metodo che restituisce il numero di colonne
+	 * */
 	@Override
 	public int getColumnCount() {
 		return ColName.length;
 	}
 
-	
+	/**
+	 * Metodo per la restituzione dei valori appropriati all'interno della tabella
+	 * */
 	@Override
 	public Object getValueAt(int rowIndex, int columnIndex) {
 		// seleziona il file		
@@ -34,12 +52,13 @@ public class MergerTableModel  extends DefaultTableModel{
 
 			case 0: return m.getFileName();
 			case 1: return m.getFilePath();
-			case 2: return m.getSize();
 			default: return null;
 		}
 	}
 
-	// specifica se le celle sono editabili
+	/**
+	 * Metodo che specifica se le celle sono editabili
+	 * */
 	@Override
 	public boolean isCellEditable(int row, int col) {
 		// nessuna cella editabile
@@ -51,15 +70,9 @@ public class MergerTableModel  extends DefaultTableModel{
 	public String getColumnName(int col) {
 		return ColName[col];
 	}
-
-	/** restituisce il tipo dei valori
-	* serve per allineare correttamente i numeri */
-//	public Class getColumnClass(int col) {
-//		return getValueAt(0, col).getClass();
-//	}
 	
+	/** Metodo che imposta i valori all'interno della tabella. */
 	public void setValueAt(Object value, int row, int col){
-		
 		fireTableDataChanged();
 	}
 }

@@ -113,7 +113,6 @@ public class Crypto extends Split implements Runnable{
         int cont;
         if((cont = getRaf().read(buf, 0, buf.length)) != -1)
         	cos.write(buf, 0, cont);
-        System.out.println("cont: "+cont);
 	}
 	
 	/**
@@ -152,14 +151,12 @@ public class Crypto extends Split implements Runnable{
 			
 			
 			read = getRaf().read(buf);
-			System.out.println("read: "+read);
 			readTot+=read;
            
 			setReadBytes(read);
 			cos.write(buf, 0, readTot);	
             
         }
-		
 		//chiusura dei flussi
 		cos.flush();
         cos.close();
@@ -175,7 +172,7 @@ public class Crypto extends Split implements Runnable{
 		String simpleName = getFullFileName().substring(0, getFullFileName().lastIndexOf('.')); //Muse
 		String newFullName = simpleName+(numSplits+1)+"C"+fileFormat;
     	CipherOutputStream cos = new CipherOutputStream(new FileOutputStream(getDestinationFolder()+newFullName), cipher);
-    	System.out.println("remainingBytes: "+remainingBytes);
+
     	int read;
     	byte[] buf = new byte[(int) remainingBytes];
     	

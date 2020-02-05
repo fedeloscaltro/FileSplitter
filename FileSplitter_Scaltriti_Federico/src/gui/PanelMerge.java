@@ -5,7 +5,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Vector;
@@ -24,10 +23,6 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
-import javax.swing.border.EmptyBorder;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableModel;
 
 import merge.Merger;
 import split.Crypto;
@@ -35,30 +30,57 @@ import split.Split;
 import split.SplitTimes;
 import split.Zip;
 
+/**
+ * Classe per inizializzare il pannello per la gestione grafica dell'unione dei file
+ * @see JPanel
+ * @see ActionListener
+ * */
 public class PanelMerge extends JPanel implements ActionListener{
+	
 	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-
+	 * Componenti grafici:
+	 * TableModel che specifica i metodi per gestire la JTable;
+	 * JTable per presentare graficamente i file selezionati;
+	 * JTextField per indicare la cartella di destinazione selezionata
+	 * Serie di JButton per: attivare la ricerca per la selezione del file da cui far partire l'unione;
+	 * permettere in un JDialog di scegliere la cartella di destinazione dei file divisi; 
+	 * confermare le impostazioni di divisione scelte per il singolo file; per eliminare tutti i file selezionati;
+	 * avviare l'unione dei file; 
+	 * JLabel indicante il nome del file selezionato;
+	 * JLabel contenente un messaggio d'errore;
+	 * JDialog per la scelta delle impostazioni di unione;
+	 * JDialog per visualizzare eventuali messaggi di errore.
+	 * */
 	private MergerTableModel dataModel;
-	private Vector<Merger> v;
 	private JTable t;
 	private JTextField destinationFolderField;
-	private JButton browse, browseDestination, settingsOk, delete, merge, okPasswd;
+	private JButton browse, browseDestination, settingsOk, delete, merge;
 	private JLabel fileNameLabel, errorLabel;
 	private JDialog choiceDialog, messageDialog;
+	
+	/**
+	 * Vettori di: oggetti Merger da aggiungere alla tabella; Stringhe per memorizzare le cartelle di destinazione scelte;
+	 * file selezionati.
+	 * File indicante il singolo file selezionato;
+	 * Stringa rappresentante la password immessa da utente.
+	 * */ 
+	private Vector<Merger> v;
 	private Vector<String> destinations;
 	private Vector<File> totalFiles;
 	private File selectedFile;
 	private String password;
 	
+	
+	/**
+	 * Costruttore del pannello contenente i componenti grafici per l'unione
+	 * */
 	public PanelMerge(){
 		super();
 		v = new Vector<Merger>();
 		destinations = new Vector<String>();
 		totalFiles = new Vector<File>();
 		
+		//pannelli figli che contengono la tabella e e bottoni
 		JPanel up = new JPanel();
 		JPanel down = new JPanel();
 		
@@ -72,7 +94,7 @@ public class PanelMerge extends JPanel implements ActionListener{
 		// aggiunge la tabella al pannello
 		add(t);
 		
-		JScrollPane jsp = new JScrollPane(t);
+		JScrollPane jsp = new JScrollPane(t); //pannello per contenere la tabella
 		up.add(jsp);
 		
 		/*--------------------------------------------------------------------------------*/
@@ -102,6 +124,10 @@ public class PanelMerge extends JPanel implements ActionListener{
 		add(up);
 		add(down);
 	}
+	
+	/**
+	 * Metodo per impostare il layout del JDialog per le impostazioni di unione
+	 * */
 	public void setDialogLayout(JLabel fileName, JPasswordField psswdField, JPanel contentPane){
 		JLabel passwdLabel = new JLabel("Password");
 		choiceDialog.add(passwdLabel);
@@ -132,6 +158,11 @@ public class PanelMerge extends JPanel implements ActionListener{
 		groupLayout.setAutoCreateContainerGaps(true);
 	}
 	
+	/**
+	 * Metodo per impostare il layout del JDialog per le impostazioni di unione
+	 * @param currentFile Stringa contenente il nome del file selezionato
+	 * @param flag parametro per abilitare o no il campo per l'inserimento della password
+	 * */
 	public void setChoiceDialog(String currentFile, boolean flag){
 		
 		JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
@@ -156,7 +187,7 @@ public class PanelMerge extends JPanel implements ActionListener{
 		choiceDialog.addWindowListener(new WindowAdapter (){
 			
 			@Override
-			public void windowClosed(WindowEvent e){ //popolo i vettori con le impostazioni da salvare
+			public void windowClosed(WindowEvent e){ //popolo il vettore e la password con le impostazioni da salvare
 					destinations.add(destinationFolderField.getText());		
 					password = String.copyValueOf(passwdField.getPassword());
 			}
@@ -172,6 +203,10 @@ public class PanelMerge extends JPanel implements ActionListener{
 		choiceDialog.pack();		
 	}
 	
+	/**
+	 * Metodo per impostare il Dialog per i messaggi d'errore
+	 * @param label JLabel contenente il messaggio da visualizzare
+	 * */
 	public void setMessageDialog(JLabel label){
 		messageDialog = new JDialog();
 		messageDialog.setVisible(true);
@@ -181,59 +216,54 @@ public class PanelMerge extends JPanel implements ActionListener{
 		messageDialog.setLocationRelativeTo(null);
 	}
 	
-//	public void getPasswd(){
-//		JPasswordField passwdField = new JPasswordField(); 
-//		okPasswd = new JButton("Ok");
-//		messageDialog = new JDialog();
-//		messageDialog.setVisible(true);
-//		messageDialog.setTitle("Inserimento password");
-//		messageDialog.setSize(350, 70);
-//		messageDialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
-//		messageDialog.setLocationRelativeTo(null);
-//		messageDialog.add(passwdField);
-//		messageDialog.add(okPasswd);
-//		
-//		messageDialog.addWindowListener(new WindowAdapter(){
-//			@Override
-//			public void windowClosed(WindowEvent e){ //salvo la password inserita da utente
-//				password = String.copyValueOf(passwdField.getPassword());
-//			}
-//		});
-//	}
-	
+	/**
+	 * Metodo per l'aggiunta di un file alla tabella
+	 * */
 	private void addToTable(){
 		
-		File f = new File(selectedFile.getAbsolutePath()); //...\Muse1D.mp3
+		File f = new File(selectedFile.getAbsolutePath()); //...\Nome1Lettera.Formato
 		System.out.println("f.getAbsolutePath(): "+f.getAbsolutePath());
 		totalFiles.add(f);
 		
 		String fileName = f.getAbsolutePath()
 				.substring(f.getAbsolutePath().lastIndexOf(File.separator)+1, 
-						f.getAbsolutePath().lastIndexOf(".")-2); 								//Muse1D
+						f.getAbsolutePath().lastIndexOf(".")-2); 								//Nome1Lettera
 		String fileFormat = f.getAbsolutePath().substring(f.getAbsolutePath().lastIndexOf("."), 
-				f.getAbsolutePath().length());												//.mp3
+				f.getAbsolutePath().length());												//.Formato
 		
 		Merger m = new Merger(fileName+fileFormat, destinationFolderField.getText()+fileName+fileFormat);
 		v.add(m);
-		dataModel.addRow(v);
+		dataModel.addRow(v); //aggiunta effettiva alla tabella
 	}
 	
+	/**
+	 * Metodo per pulire la tabella:
+	 * rimuovo tutti gli elementi dal vettore, dalla tabella graficamente e comunico il cambiamento
+	 * */
 	private void clearTable(){
 		v.removeAllElements();
 		dataModel.getDataVector().removeAllElements();
 		dataModel.fireTableDataChanged();
 	}
 	
+	/**
+	 * Metodo per abilitare o disabilitare i JButton presenti nel pannello di unione
+	 * */
 	public void enableButtons(boolean flag){
 		browse.setEnabled(flag);
 		merge.setEnabled(flag);
 		delete.setEnabled(flag);
 	}
 	
+	/**
+	 * Metodo sovrascritto per la gestione degli eventi scaturiti dal click sui JButton
+	 * */
 	@Override
 	public void actionPerformed(ActionEvent e) {
+		//se si è scelto di cercare nel file system i file da dividere
 		if (e.getActionCommand().equals("Naviga")){
-			if(totalFiles.size() == 1){
+			
+			if(totalFiles.size() == 1){ //controllo che non si vada ad avere più di un file selezionato
 				JOptionPane.showMessageDialog(this, 
 						"Non puoi selezionare più file", "ERRORE", JOptionPane.ERROR_MESSAGE);
 			}else{
@@ -248,11 +278,13 @@ public class PanelMerge extends JPanel implements ActionListener{
 				if (result == JFileChooser.APPROVE_OPTION) {
 					selectedFile = fileChooser.getSelectedFile();
 					
+					//se ho effettivamente selezionato un file
 					if(selectedFile != null)
 						setChoiceDialog(selectedFile.getAbsolutePath(), true);
 				}			
 			}
 			
+			//se si clicca sul bottone per selezionare la cartella di destinazione
 		}else if (e.getActionCommand().equals("Cerca")){
 			JFileChooser folderChooser = new JFileChooser();
 			folderChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -264,10 +296,11 @@ public class PanelMerge extends JPanel implements ActionListener{
 			if (folderChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION)
 				destinationFolderField.setText(folderChooser.getSelectedFile()+File.separator);	
 			
-			
+			//se si clicca sul bottone per confermare le impostazioni di unione
 		}else if (e.getActionCommand().equals("OK")){
 			String noDestination = "Cartella di destinazione non valida";
 				
+			//se non si ha scelto una destinazione valida
 			if (destinationFolderField.getText().equals("Destinazione")){
 				errorLabel = new JLabel(noDestination, SwingConstants.CENTER);
 				setMessageDialog(errorLabel);
@@ -276,7 +309,7 @@ public class PanelMerge extends JPanel implements ActionListener{
 				addToTable();
 			}
 			
-			
+		//in caso si voglia eliminare il file scelto
 		}else if (e.getActionCommand().equals("Elimina")){
 			destinations.clear();
 			totalFiles.clear();
@@ -287,7 +320,7 @@ public class PanelMerge extends JPanel implements ActionListener{
 				errorLabel = new JLabel("Non hai selezionato alcun file", SwingConstants.CENTER);
 				setMessageDialog(errorLabel);
 			}else{
-				//ATTUA LA DIVISIONE EFFETTIVA
+				//attuo l'unione effettiva
 				JOptionPane.showMessageDialog(this, 
 						"Inizio del processo di unione", "Informazione", JOptionPane.INFORMATION_MESSAGE);
 				
@@ -304,11 +337,10 @@ public class PanelMerge extends JPanel implements ActionListener{
 		            fileName = selectedFile.getAbsolutePath()
 		                	.substring(selectedFile.getAbsolutePath().lastIndexOf(File.separator)+1, 
 		                			selectedFile.getAbsolutePath().lastIndexOf("."));
+		            
 					//in base a che tipo di unione voglio fare, attuo determinate operazioni
 		        	switch(letter){
-		        		case 'D':
-		        	       	System.out.println("\nfileFormat: "+fileFormat+'\n'+"fileName: "+fileName);
-		        				                	
+		        		case 'D':               	
 		        			m = new Merger(fileName, fileFormat, destinationFolderField.getText()); //directory+fileName+1+letter+fileFormat
 		        			m.merge(originalDirectory);
 		        			break;

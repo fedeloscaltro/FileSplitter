@@ -133,12 +133,12 @@ public class Split implements Runnable{
         }
 	}
 	
+	
 	/**
 	 * Metodo invocato in caso siano rimasti dei bytes da leggere
 	 * @param remainingBytes numero di bytes rimasti da leggere
 	 * @param numSplits numero di file originati dalla divisione
 	 * */
-	
     public void checkFileRemaining(long remainingBytes, long numSplits) throws IOException{
     	String simpleName = null, fileFormat = getFullPath().substring(getFullPath().lastIndexOf("."), getFullPath().length());
     	simpleName = getFullFileName().substring(0, getFullFileName().lastIndexOf('.'));

@@ -1,36 +1,52 @@
 package gui;
 
 import java.util.Vector;
-
-import javax.swing.*;
-import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableModel;
-
 import split.Split;
 
 public class MyTableModel extends DefaultTableModel{
 	
-	private static final long serialVersionUID = 1L;
-	private Vector<?> v = null;
-	Split sp;
-	int offset = 0;
-	// intestazioni delle colonne
+	/**
+	 * Vettore di dati da aggiungere alla tabella
+	 * */
+	private Vector<Split> v = null;
+	
+	/**
+	 * Oggetto contenente i dati per la tabella
+	 * */
+	private Split sp;
+	
+	/**
+	 * Array contenente le intestazioni delle colonne
+	 * */ 
 	private String[] ColName = {"Nome", "Percorso", "Dimensione", "Azione"};
 
-	public MyTableModel(Vector v) {
-	this.v = v; // inizializzato con il vettore
+	/**
+	 * Costruttore del TableModel
+	 * @param v vettore di dati da aggiungere
+	 * */
+	public MyTableModel(Vector<Split>v) {
+	this.v = v;
 	}
 	
+	
+	/**
+	 * Metodo che restituisce il numero di colonne
+	 * */
 	@Override
 	public int getColumnCount() {
 		return ColName.length;
 	}
 
 	
+	/**
+	 * Metodo per la restituzione dei valori appropriati all'interno della tabella
+	 * */
 	@Override
 	public Object getValueAt(int rowIndex, int columnIndex) {
 		// seleziona il file		
 		sp = (Split) v.elementAt(rowIndex);
+		
 		// la stringa corrispondente alla colonna
 		switch (columnIndex){
 
@@ -54,24 +70,27 @@ public class MyTableModel extends DefaultTableModel{
 		}
 	}
 
-	// specifica se le celle sono editabili
+	/**
+	 * Metodo che specifica se le celle sono editabili
+	 * */ 
 	@Override
 	public boolean isCellEditable(int row, int col) {
 		// nessuna cella editabile
 		return false;
 	}
 	
-	/** restituisce il nome della colonna */
+	/** Metodo che restituisce il nome della colonna */
 	public String getColumnName(int col) {
 		return ColName[col];
 	}
 
-	/** restituisce il tipo dei valori
-	* serve per allineare correttamente i numeri */
+	/** Metodo che restituisce il tipo dei valori.
+	* Serve per allineare correttamente i numeri */
 	public Class getColumnClass(int col) {
 		return getValueAt(0, col).getClass();
 	}
 	
+	/** Metodo che imposta i valori all'interno della tabella. */
 	public void setValueAt(Object value, int row, int col){
 		
 		fireTableDataChanged();
